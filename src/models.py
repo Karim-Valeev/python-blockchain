@@ -5,28 +5,37 @@ from Crypto.PublicKey import RSA
 from Crypto.PublicKey.RSA import RsaKey
 from Crypto.Signature import PKCS1_PSS
 
-from utils import get_bytes_hash
+from utils import get_bytes_hash, get_str_hash, get_ts_and_signature_from_arbiter
 
 
 class Block:
-    block_number: int
+    number: int
     previous_block_hash: bytes
-    signature: bytes
     data: List[str]  # aka transactions
+    block_signature: bytes  # from previous_block_hash and data
+    arbiter_signature: bytes  # from previous_block_hash, data and block_signature
+    arbiter_signature_timestamp: str
 
-    def __init__(self, block_number, previous_block_hash, data, signature) -> None:
-        self.block_number = block_number
+    def __init__(self, number, previous_block_hash, data, block_signature) -> None:
+        self.number = number
         self.previous_block_hash = previous_block_hash
         self.data = data
-        self.signature = signature
+        self.block_signature = block_signature
+        self.arbiter_signature_timestamp = ''
+        self.arbiter_signature = b''
 
     def __str__(self):
-        result = ''
-        result += f'{self.block_number}\n'
-        result += f'{self.previous_block_hash}\n'
-        result += f'{self.data}\n'
-        result += f'{self.signature}\n'
-        return result
+        return '<Block: number = %s, previous_block_hash = %s, data = %s, signature = %s>, arbiter_signature_timestamp = %s, arbiter_signature=%s' % (
+            self.number, self.previous_block_hash, self.data, self.block_signature,
+            self.arbiter_signature_timestamp, self.arbiter_signature
+        )
+
+    def get_block_info_hash_digest(self) -> bytes:
+        pass
+
+    def get_block_info_hash_hexdigest(self) -> str:
+        payload = self.previous_block_hash + ''.join(self.data).encode("utf-8") + self.block_signature
+        return get_str_hash(payload)
 
 
 class KeyPair:
@@ -37,11 +46,8 @@ class KeyPair:
         self.private_key = RSA.generate(2048)
         self.public_key = self.private_key.publickey()
 
-    def save_keys(self):
-        pass
-
     def __str__(self):
-        return 'Private key: %s \nPublic key %s' % (
+        return '<KeyPait: Private key: %s \nPublic key %s>' % (
             self.private_key.exportKey().decode("utf-8"),
             self.public_key.exportKey().decode("utf-8")
         )
@@ -80,6 +86,9 @@ class BlockChain:
                 [self.transaction_cache[i]],
                 self._generate_rsa_pss_signature(previous_block_hash),
             )
+            block.arbiter_signature_timestamp, block.arbiter_signature = get_ts_and_signature_from_arbiter(
+                block.get_block_info_hash_hexdigest()
+            )
             # Find hash from previous block hash and data
             previous_block_hash = get_bytes_hash(
                 block.previous_block_hash + ''.join(block.data).encode("utf-8")
@@ -99,12 +108,12 @@ class BlockChain:
                 block.previous_block_hash + ''.join(block.data).encode("utf-8")
             )
 
-            if not self._verify_rsa_pss_signature(block.previous_block_hash, block.signature):
+            if not self._verify_rsa_pss_signature(block.previous_block_hash, block.block_signature):
                 return False
         return True
 
-    def damage_block(self, block_number):
-        self.blockchain[block_number].data = ["...damaged data..."]
+    def damage_block(self, number):
+        self.blockchain[number].data = ["...damaged data..."]
 
     def write_to_file(self, filename):
         with open(filename, "w") as f:

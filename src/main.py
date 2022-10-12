@@ -1,8 +1,16 @@
+from typing import Optional
+
+import requests
+
+from config.settings import settings
 from models import KeyPair, BlockChain
+from utils import get_arbiter_public_key
 
 if __name__ == '__main__':
     key_pair = KeyPair()
     print(key_pair)
+
+    arbiter_public_key = get_arbiter_public_key()
 
     transactions = [
         "1. User 1 send 1 Karimcoin to User 2",
@@ -27,4 +35,3 @@ if __name__ == '__main__':
     block_chain.damage_block(3)
 
     print(f'Blockchain verified: {block_chain.is_verified()}')
-

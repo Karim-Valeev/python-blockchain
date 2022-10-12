@@ -9,8 +9,9 @@ load_dotenv(find_dotenv())
 
 
 class Settings(BaseSettings):
+    ARBITER_URL = os.environ.get("ARBITER_URL", "http://89.108.115.118")
 
-    LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_LEVEL: str = os.environ.get('LOG_LEVEL', 'INFO')
     LOGGER_NAME: str = 'app_logger'
     LOGGING = {
         'version': 1,
