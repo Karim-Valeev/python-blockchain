@@ -1,4 +1,3 @@
-# from hashlib import sha256
 import requests
 from typing import Tuple, Optional
 
@@ -25,13 +24,9 @@ def get_arbiter_public_key() -> Optional[bytes]:
 
 
 def get_ts_and_signature_from_arbiter(hash_hexdigest: str) -> Tuple[str, bytes]:
-    response = requests.get(
-        settings.ARBITER_URL + "/ts",
-        {"digest": hash_hexdigest}
-    )
+    response = requests.get(settings.ARBITER_URL + "/ts", {"digest": hash_hexdigest})
     if response.status_code == 200:
         data = response.json()
         if data['status'] == 0:
             return data["timeStampToken"]['ts'], data["timeStampToken"]['signature']
-
 

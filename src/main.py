@@ -1,8 +1,3 @@
-from typing import Optional
-
-import requests
-
-from config.settings import settings
 from models import KeyPair, BlockChain
 from utils import get_arbiter_public_key
 
